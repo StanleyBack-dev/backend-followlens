@@ -1,0 +1,14 @@
+import type { AppErrorDefinition } from "@/common/exceptions/app-error-definition.type";
+import { authErrors } from "@/common/exceptions/catalogs/auth-errors.catalog";
+import { followersErrors } from "@/common/exceptions/catalogs/followers-errors.catalog";
+import { importsErrors } from "@/common/exceptions/catalogs/imports-errors.catalog";
+import { mailsErrors } from "@/common/exceptions/catalogs/mails-errors.catalog";
+import { syncErrors } from "@/common/exceptions/catalogs/sync-errors.catalog";
+
+export const APP_ERRORS = {
+  auth: authErrors,
+  followers: followersErrors,
+  imports: importsErrors,
+  mails: mailsErrors,
+  sync: syncErrors,
+} as const satisfies Record<string, Record<string, AppErrorDefinition<never>>>;
