@@ -37,6 +37,10 @@ export const envValidationSchema = Joi.object({
   // calls. When unset, the /internal endpoints reject every request.
   CRON_SECRET: Joi.string().min(16).allow("").optional(),
 
+  // === ACCOUNT ===
+  // Days between a deletion request and the actual removal of the account.
+  ACCOUNT_DELETION_GRACE_DAYS: Joi.number().integer().min(1).max(90).default(7),
+
   // === INSTAGRAM SESSION (optional — automatic mode) ===
   // The session-based sync only runs when these are set; the import mode works
   // without them. Cookies from DevTools > Application > Cookies.

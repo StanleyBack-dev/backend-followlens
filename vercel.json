@@ -17,6 +17,10 @@
     {
       "path": "/internal/sync/daily",
       "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/internal/account/purge",
+      "schedule": "0 9 * * *"
     }
   ]
 }

@@ -5,6 +5,7 @@ import { HttpExceptionFilter } from "@/common/filters/http-exception.filter";
 import { InternalApiKeyGuard } from "@/common/security/internal-api-key.guard";
 import { AppConfigModule } from "@/config/config.module";
 import { DatabaseModule } from "@/database/database.module";
+import { AccountModule } from "@/modules/account/account.module";
 import { AdminModule } from "@/modules/admin/admin.module";
 import { AuthModule } from "@/modules/auth/auth.module";
 import { FollowersModule } from "@/modules/followers/followers.module";
@@ -22,6 +23,7 @@ import { SharedModule } from "@/shared/shared.module";
     SharedModule,
     UsersModule,
     AuthModule,
+    AccountModule,
     AdminModule,
     LegalModule,
     FollowersModule,
