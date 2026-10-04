@@ -51,6 +51,7 @@ export class AuthController {
         isMaster: this.adminPolicy.isMaster(user.email),
         termsAccepted: user.termsVersion === CURRENT_LEGAL_VERSION,
         legalVersion: CURRENT_LEGAL_VERSION,
+        deletionScheduledFor: user.deletionScheduledFor?.toISOString() ?? null,
       },
     };
   }
@@ -69,6 +70,7 @@ export class AuthController {
       isMaster: current.isMaster,
       termsAccepted: user?.termsVersion === CURRENT_LEGAL_VERSION,
       legalVersion: CURRENT_LEGAL_VERSION,
+      deletionScheduledFor: user?.deletionScheduledFor?.toISOString() ?? null,
     };
   }
 }

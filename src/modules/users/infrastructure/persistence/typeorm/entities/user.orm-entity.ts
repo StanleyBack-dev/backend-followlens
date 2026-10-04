@@ -51,6 +51,22 @@ export class UserOrmEntity {
   @Column({ name: "last_login_at", type: "timestamptz", nullable: true })
   lastLoginAt!: Date | null;
 
+  // Set together when the user asks to delete the account; the row (and, by
+  // cascade, all follower data) is removed once the scheduled date passes.
+  @Column({
+    name: "deletion_requested_at",
+    type: "timestamptz",
+    nullable: true,
+  })
+  deletionRequestedAt!: Date | null;
+
+  @Column({
+    name: "deletion_scheduled_for",
+    type: "timestamptz",
+    nullable: true,
+  })
+  deletionScheduledFor!: Date | null;
+
   @CreateDateColumn({ name: "created_at", type: "timestamptz" })
   createdAt!: Date;
 

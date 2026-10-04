@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import type { Repository } from "typeorm";
+import { LessThanOrEqual, type Repository } from "typeorm";
 import type {
   AdminUserView,
   ListUsersFilters,
@@ -14,8 +14,7 @@ import { UserRole } from "@/modules/users/domain/enums/user-role.enum";
 import { UserOrmEntity } from "@/modules/users/infrastructure/persistence/typeorm/entities/user.orm-entity";
 import { paginate, type Paginated } from "@/shared/application/pagination";
 
-const UUID =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 @Injectable()
 export class UserTypeormRepository implements UserRepositoryPort {
@@ -50,7 +49,7 @@ export class UserTypeormRepository implements UserRepositoryPort {
     if (existing) {
       existing.googleId = input.googleId;
       existing.email = input.email;
-      existing.name = input.name;
+      // The name is user-editable after sign-up, so Google must not overwrite it.
       existing.pictureUrl = input.pictureUrl;
       existing.lastLoginAt = now;
       // Only ever auto-promote (the master email); never auto-demote an admin
@@ -81,6 +80,36 @@ export class UserTypeormRepository implements UserRepositoryPort {
       { id: userId },
       { termsVersion: version, termsAcceptedAt: at },
     );
+  }
+
+  async updateName(userId: string, name: string): Promise<void> {
+    await this.repository.update({ id: userId }, { name });
+  }
+
+  async scheduleDeletion(
+    userId: string,
+    requestedAt: Date,
+    scheduledFor: Date,
+  ): Promise<void> {
+    await this.repository.update(
+      { id: userId },
+      { deletionRequestedAt: requestedAt, deletionScheduledFor: scheduledFor },
+    );
+  }
+
+  async cancelDeletion(userId: string): Promise<void> {
+    await this.repository.update(
+      { id: userId },
+      { deletionRequestedAt: null, deletionScheduledFor: null },
+    );
+  }
+
+  async purgeDueForDeletion(now: Date): Promise<number> {
+    // Followers, events and imports go with the row (ON DELETE CASCADE).
+    const result = await this.repository.delete({
+      deletionScheduledFor: LessThanOrEqual(now),
+    });
+    return result.affected ?? 0;
   }
 
   async list(filters: ListUsersFilters): Promise<Paginated<AdminUserView>> {
@@ -135,6 +164,10 @@ function toView(row: UserOrmEntity): UserView {
     role: row.role,
     termsVersion: row.termsVersion,
     termsAcceptedAt: row.termsAcceptedAt,
+    lastLoginAt: row.lastLoginAt,
+    createdAt: row.createdAt,
+    deletionRequestedAt: row.deletionRequestedAt,
+    deletionScheduledFor: row.deletionScheduledFor,
   };
 }
 

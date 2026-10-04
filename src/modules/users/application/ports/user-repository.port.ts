@@ -12,6 +12,10 @@ export type UserView = {
   role: UserRole;
   termsVersion: string | null;
   termsAcceptedAt: Date | null;
+  lastLoginAt: Date | null;
+  createdAt: Date;
+  deletionRequestedAt: Date | null;
+  deletionScheduledFor: Date | null;
 };
 
 /** Admin listing row (includes activity timestamps). */
@@ -50,13 +54,27 @@ export type UserCounts = {
 export interface UserRepositoryPort {
   findById(id: string): Promise<UserView | null>;
   findByEmail(email: string): Promise<UserView | null>;
-  /** Creates the user on first sign-in, or updates profile + last login. */
-  /** `created` is true only when this sign-in created the account. */
+  /**
+   * Creates the user on first sign-in, or refreshes picture + last login. The
+   * name is only taken from Google on creation (the user can edit it later).
+   * `created` is true only when this sign-in created the account.
+   */
   upsertFromGoogle(
     input: UpsertGoogleUserInput,
     now: Date,
   ): Promise<{ user: UserView; created: boolean }>;
   acceptTerms(userId: string, version: string, at: Date): Promise<void>;
+
+  // === account (self-service) ===
+  updateName(userId: string, name: string): Promise<void>;
+  scheduleDeletion(
+    userId: string,
+    requestedAt: Date,
+    scheduledFor: Date,
+  ): Promise<void>;
+  cancelDeletion(userId: string): Promise<void>;
+  /** Removes every account whose grace period ended; returns how many. */
+  purgeDueForDeletion(now: Date): Promise<number>;
 
   // === admin ===
   list(filters: ListUsersFilters): Promise<Paginated<AdminUserView>>;

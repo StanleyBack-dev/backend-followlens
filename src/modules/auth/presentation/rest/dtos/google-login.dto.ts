@@ -18,6 +18,8 @@ export type SessionUserResponse = {
   isMaster: boolean;
   termsAccepted: boolean;
   legalVersion: string;
+  /** ISO date when the account will be deleted, or null when not scheduled. */
+  deletionScheduledFor: string | null;
 };
 
 export type GoogleLoginResponse = {
