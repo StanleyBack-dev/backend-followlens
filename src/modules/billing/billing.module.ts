@@ -5,6 +5,7 @@ import {
   BILLING_SETTINGS,
   billingSettingsFactory,
 } from "@/modules/billing/application/billing.config";
+import { AdminSubscriptionsQuery } from "@/modules/billing/application/admin-subscriptions.query";
 import { BILLING_PAYMENT_REPOSITORY } from "@/modules/billing/application/ports/billing-payment-repository.port";
 import { PAYMENT_GATEWAY } from "@/modules/billing/application/ports/payment-gateway.port";
 import { SUBSCRIPTION_REPOSITORY } from "@/modules/billing/application/ports/subscription-repository.port";
@@ -63,8 +64,13 @@ import { planLimitsProvider } from "@/shared/application/plan-limits.config";
     ListMyPaymentsUseCase,
     HandleAsaasWebhookUseCase,
     RunSubscriptionLifecycleUseCase,
+    AdminSubscriptionsQuery,
   ],
   // Public API of this bounded context.
-  exports: [RenewingSubscriptionChecker, RunSubscriptionLifecycleUseCase],
+  exports: [
+    RenewingSubscriptionChecker,
+    RunSubscriptionLifecycleUseCase,
+    AdminSubscriptionsQuery,
+  ],
 })
 export class BillingModule {}

@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { LessThanOrEqual, type Repository } from "typeorm";
+import { In, LessThanOrEqual, type Repository } from "typeorm";
 import type {
   AdminUserView,
   ListUsersFilters,
@@ -36,6 +36,12 @@ export class UserTypeormRepository implements UserRepositoryPort {
       email: email.trim().toLowerCase(),
     });
     return row ? toView(row) : null;
+  }
+
+  async findByIds(ids: string[]): Promise<UserView[]> {
+    const valid = ids.filter((id) => UUID.test(id));
+    if (valid.length === 0) return [];
+    return (await this.repository.findBy({ id: In(valid) })).map(toView);
   }
 
   async upsertFromGoogle(
@@ -137,7 +143,8 @@ export class UserTypeormRepository implements UserRepositoryPort {
       .createQueryBuilder("u")
       .where("u.last_login_at >= :since", { since: activeSince })
       .getCount();
-    return { total, admins, activeLast30Days };
+    const pro = await this.repository.countBy({ plan: UserPlan.PRO });
+    return { total, admins, pro, activeLast30Days };
   }
 
   async updateAccess(

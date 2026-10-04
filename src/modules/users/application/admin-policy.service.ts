@@ -10,7 +10,9 @@ export class AdminPolicyService {
   constructor(private readonly config: ConfigService) {}
 
   masterEmail(): string | null {
-    const email = (this.config.get<string>("OWNER_EMAIL") ?? "").trim().toLowerCase();
+    const email = (this.config.get<string>("OWNER_EMAIL") ?? "")
+      .trim()
+      .toLowerCase();
     return email || null;
   }
 

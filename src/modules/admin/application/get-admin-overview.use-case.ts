@@ -16,6 +16,8 @@ export class GetAdminOverviewUseCase {
   ) {}
 
   execute(): Promise<UserCounts> {
-    return this.users.counts(new Date(this.clock.now().getTime() - 30 * DAY_MS));
+    return this.users.counts(
+      new Date(this.clock.now().getTime() - 30 * DAY_MS),
+    );
   }
 }

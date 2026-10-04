@@ -102,4 +102,6 @@ export const envValidationSchema = Joi.object({
   MAIL_FROM_NAME: Joi.string().min(2).default("FollowLens"),
   MAIL_REPLY_TO_EMAIL: Joi.string().email().allow("").optional(),
   MAIL_REPLY_TO_NAME: Joi.string().allow("").optional(),
+  // Where new support tickets are announced. Falls back to OWNER_EMAIL.
+  SUPPORT_NOTIFICATION_EMAIL: Joi.string().email().allow("").optional(),
 });

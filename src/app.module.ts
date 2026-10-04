@@ -14,6 +14,7 @@ import { ImportsModule } from "@/modules/imports/imports.module";
 import { LegalModule } from "@/modules/legal/legal.module";
 import { MaintenanceModule } from "@/modules/maintenance/maintenance.module";
 import { ProfilesModule } from "@/modules/profiles/profiles.module";
+import { SupportModule } from "@/modules/support/support.module";
 import { SyncModule } from "@/modules/sync/sync.module";
 import { UsersModule } from "@/modules/users/users.module";
 import { SharedModule } from "@/shared/shared.module";
@@ -32,6 +33,7 @@ import { SharedModule } from "@/shared/shared.module";
     MaintenanceModule,
     LegalModule,
     ProfilesModule,
+    SupportModule,
     FollowersModule,
     ImportsModule,
     SyncModule,

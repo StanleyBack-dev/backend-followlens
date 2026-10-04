@@ -1,5 +1,6 @@
 import { IsEnum, IsOptional, IsString, MaxLength } from "class-validator";
 import { PaginationQueryDto } from "@/common/dtos/pagination-query.dto";
+import { SubscriptionStatus } from "@/modules/billing/domain/enums/subscription-status.enum";
 import { UserPlan } from "@/modules/users/domain/enums/user-plan.enum";
 import { UserRole } from "@/modules/users/domain/enums/user-role.enum";
 
@@ -12,6 +13,12 @@ export class ListUsersQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsEnum(UserRole)
   role?: UserRole;
+}
+
+export class ListSubscriptionsQueryDto extends PaginationQueryDto {
+  @IsOptional()
+  @IsEnum(SubscriptionStatus)
+  status?: SubscriptionStatus;
 }
 
 export class UpdateUserAccessDto {
