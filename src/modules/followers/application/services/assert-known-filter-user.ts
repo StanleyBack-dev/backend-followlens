@@ -6,10 +6,10 @@ import type { FollowerRepositoryPort } from "@/modules/followers/application/por
 // this user; anything else (tampered URL, stale link) is rejected.
 export async function assertKnownFilterUser(
   followers: FollowerRepositoryPort,
-  userId: string,
+  profileId: string,
   username: string | undefined,
 ): Promise<void> {
-  if (username && !(await followers.existsByUsername(userId, username))) {
+  if (username && !(await followers.existsByUsername(profileId, username))) {
     throw AppException.from(APP_ERRORS.followers.unknownFilterUser, undefined);
   }
 }

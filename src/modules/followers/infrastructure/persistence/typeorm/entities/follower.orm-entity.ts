@@ -8,13 +8,13 @@ import {
 } from "typeorm";
 import { FollowerStatus } from "@/modules/followers/domain/enums/follower-status.enum";
 
-// Current state of every account that has ever followed the user. Keyed by
-// (user_id, normalized @username).
+// Current state of every account that has ever followed a profile. Keyed by
+// (profile_id, normalized @username).
 @Entity("tb_followers")
-@Index("IDX_followers_user_status", ["userId", "status"])
+@Index("IDX_followers_profile_status", ["profileId", "status"])
 export class FollowerOrmEntity {
-  @PrimaryColumn({ name: "idtb_users", type: "uuid" })
-  userId!: string;
+  @PrimaryColumn({ name: "idtb_profiles", type: "uuid" })
+  profileId!: string;
 
   @PrimaryColumn({ type: "varchar", length: 64 })
   username!: string;

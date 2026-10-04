@@ -5,6 +5,7 @@ import { CronSecretGuard } from "@/common/security/cron-secret.guard";
 import { FollowersModule } from "@/modules/followers/followers.module";
 import { InstagramModule } from "@/modules/instagram/instagram.module";
 import { NotificationsModule } from "@/modules/notifications/notifications.module";
+import { ProfilesModule } from "@/modules/profiles/profiles.module";
 import { UsersModule } from "@/modules/users/users.module";
 import { OwnerResolverService } from "@/modules/sync/application/services/owner-resolver.service";
 import { INTEGRATION_STATE_REPOSITORY } from "@/modules/sync/application/ports/integration-state-repository.port";
@@ -39,6 +40,7 @@ import { SyncController } from "@/modules/sync/presentation/rest/sync.controller
     FollowersModule,
     NotificationsModule,
     UsersModule,
+    ProfilesModule,
   ],
   controllers: [SyncController, InternalSyncController],
   providers: [

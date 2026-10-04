@@ -10,7 +10,8 @@ import type { ClockPort } from "@/shared/application/ports/clock.port";
 import type { LockPort } from "@/shared/application/ports/lock.port";
 
 const file = { filename: "export.zip", buffer: Buffer.from("x") };
-const actor = { id: "user-1", email: "u@test.com" };
+const actor = { profileId: "profile-1", email: "u@test.com", pro: true };
+const freeActor = { ...actor, pro: false };
 
 function build(overrides: {
   reader?: Partial<ExportFileReaderPort>;
@@ -18,6 +19,7 @@ function build(overrides: {
   completedToday?: number;
   lockFree?: boolean;
   settings?: Partial<ImportSettings>;
+  lastComparisonAt?: Date | null;
 }) {
   const records: { status: ImportStatus; errorCode: string | null }[] = [];
   const clock = {
@@ -43,10 +45,14 @@ function build(overrides: {
       return { id: "imp-1", ...input };
     }),
     countCompletedOn: jest.fn(async () => overrides.completedToday ?? 0),
+    findLastComparisonAt: jest.fn(
+      async () => overrides.lastComparisonAt ?? null,
+    ),
   } as unknown as ImportRepositoryPort & Record<string, jest.Mock>;
 
   const notifier = {
     executeSafely: jest.fn(async () => 2),
+    dismissSafely: jest.fn(async () => 0),
   } as unknown as import("@/modules/notifications/notify-pending-unfollows.use-case").NotifyPendingUnfollowsUseCase &
     Record<string, jest.Mock>;
 
@@ -77,6 +83,12 @@ function build(overrides: {
     clock,
     apply,
     notifier,
+    {
+      freeImportIntervalDays: 7,
+      freeHistoryDays: 30,
+      freeProfiles: 1,
+      proProfiles: 3,
+    },
   );
   return { useCase, records, lock, imports, notifier, apply };
 }
@@ -91,6 +103,35 @@ describe("ImportFollowersExportUseCase", () => {
     expect(result.import.gainedCount).toBe(2);
     expect(result.emailsSent).toBe(2);
     expect(ctx.lock.release).toHaveBeenCalled();
+  });
+
+  it("makes a Free user wait between imports", async () => {
+    const ctx = build({ lastComparisonAt: new Date("2026-09-30T12:00:00Z") });
+    await expect(ctx.useCase.execute(freeActor, file)).rejects.toMatchObject({
+      response: {
+        code: "IMPORT_PLAN_INTERVAL_NOT_ELAPSED",
+        details: { nextAllowedAt: "2026-10-07T12:00:00.000Z" },
+      },
+    });
+    expect(ctx.apply.execute).not.toHaveBeenCalled();
+  });
+
+  it("lets a Free user import once the interval has passed, without the e-mail alert", async () => {
+    const ctx = build({ lastComparisonAt: new Date("2026-09-20T12:00:00Z") });
+    const result = await ctx.useCase.execute(freeActor, file);
+
+    expect(result.import.status).toBe(ImportStatus.COMPLETED);
+    expect(result.emailsSent).toBe(0);
+    expect(ctx.notifier.dismissSafely).toHaveBeenCalledWith("profile-1");
+    expect(ctx.notifier.executeSafely).not.toHaveBeenCalled();
+  });
+
+  it("does not apply the Free interval to a Pro user", async () => {
+    const ctx = build({ lastComparisonAt: new Date("2026-10-02T11:00:00Z") });
+    const result = await ctx.useCase.execute(actor, file);
+
+    expect(result.import.status).toBe(ImportStatus.COMPLETED);
+    expect(ctx.imports.findLastComparisonAt).not.toHaveBeenCalled();
   });
 
   it("rejects a file above the size limit before touching anything", async () => {

@@ -53,7 +53,11 @@ class InMemoryRuns implements Partial<SyncRunRepositoryPort> {
   }
 }
 
-const owner = { userId: "owner-user", email: "owner@test.com" };
+const owner = {
+  userId: "owner-user",
+  email: "owner@test.com",
+  profileId: "owner-profile",
+};
 
 const settings: SyncSettings = {
   manualDailyLimit: 1,

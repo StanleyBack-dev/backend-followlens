@@ -15,6 +15,8 @@ import { ListImportsUseCase } from "@/modules/imports/application/use-cases/list
 import { ZipExportFileReader } from "@/modules/imports/infrastructure/file/zip-export-file.reader";
 import { ImportOrmEntity } from "@/modules/imports/infrastructure/persistence/typeorm/entities/import.orm-entity";
 import { ImportTypeormRepository } from "@/modules/imports/infrastructure/persistence/typeorm/repositories/import-typeorm.repository";
+import { ProfilesModule } from "@/modules/profiles/profiles.module";
+import { planLimitsProvider } from "@/shared/application/plan-limits.config";
 import { ImportsController } from "@/modules/imports/presentation/rest/imports.controller";
 
 @Module({
@@ -22,6 +24,7 @@ import { ImportsController } from "@/modules/imports/presentation/rest/imports.c
     TypeOrmModule.forFeature([ImportOrmEntity]),
     FollowersModule,
     NotificationsModule,
+    ProfilesModule,
   ],
   controllers: [ImportsController],
   providers: [
@@ -30,6 +33,7 @@ import { ImportsController } from "@/modules/imports/presentation/rest/imports.c
       useFactory: importSettingsFactory,
       inject: [ConfigService],
     },
+    planLimitsProvider,
     { provide: IMPORT_REPOSITORY, useClass: ImportTypeormRepository },
     { provide: EXPORT_FILE_READER, useClass: ZipExportFileReader },
     ImportFollowersExportUseCase,

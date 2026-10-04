@@ -102,7 +102,7 @@ export class SyncEngineService {
   private async finish(run: SyncRun, owner: SyncOwner): Promise<void> {
     const followers = await this.runs.loadItems(run.id);
     try {
-      const result = await this.applySnapshot.execute(owner.userId, {
+      const result = await this.applySnapshot.execute(owner.profileId, {
         importId: run.id,
         entries: followers.map((f) => ({
           username: f.username,
@@ -115,7 +115,7 @@ export class SyncEngineService {
       );
       await this.runs.save(run);
       await this.runs.deleteItems(run.id);
-      await this.notifier.executeSafely(owner.userId, owner.email);
+      await this.notifier.executeSafely(owner.profileId, owner.email);
     } catch (error) {
       if (error instanceof SnapshotRejectedError) {
         run.fail("SNAPSHOT_REJECTED", error.reason, this.clock.now());

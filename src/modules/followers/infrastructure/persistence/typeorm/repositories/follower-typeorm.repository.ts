@@ -44,25 +44,25 @@ export class FollowerTypeormRepository implements FollowerRepositoryPort {
     return this.dataSource.getRepository(FollowerEventOrmEntity);
   }
 
-  async findAllKnown(userId: string): Promise<KnownFollower[]> {
+  async findAllKnown(profileId: string): Promise<KnownFollower[]> {
     return this.followers.find({
-      where: { userId },
+      where: { profileId },
       select: { username: true, status: true },
     });
   }
 
   async applyChangeSet(
-    userId: string,
+    profileId: string,
     changes: SnapshotChangeSet,
   ): Promise<void> {
     await this.dataSource.transaction(async (manager) => {
-      await this.upsertCurrent(manager, userId, changes);
-      await this.markLost(manager, userId, changes);
+      await this.upsertCurrent(manager, profileId, changes);
+      await this.markLost(manager, profileId, changes);
       for (const batch of chunk(changes.events)) {
         await manager.insert(
           FollowerEventOrmEntity,
           batch.map((event) => ({
-            userId,
+            profileId,
             username: event.username,
             type: event.type,
             importId: event.importId,
@@ -76,7 +76,7 @@ export class FollowerTypeormRepository implements FollowerRepositoryPort {
 
   private async upsertCurrent(
     manager: EntityManager,
-    userId: string,
+    profileId: string,
     changes: SnapshotChangeSet,
   ): Promise<void> {
     for (const batch of chunk(changes.current)) {
@@ -86,7 +86,7 @@ export class FollowerTypeormRepository implements FollowerRepositoryPort {
         .into(FollowerOrmEntity)
         .values(
           batch.map((entry) => ({
-            userId,
+            profileId,
             username: entry.username.slice(0, 64),
             status: FollowerStatus.ACTIVE,
             followedAt: entry.followedAt,
@@ -98,7 +98,7 @@ export class FollowerTypeormRepository implements FollowerRepositoryPort {
         // first_seen_at is left out: it keeps the original date.
         .orUpdate(
           ["status", "followed_at", "last_seen_at", "lost_at"],
-          ["idtb_users", "username"],
+          ["idtb_profiles", "username"],
         )
         .execute();
     }
@@ -106,24 +106,24 @@ export class FollowerTypeormRepository implements FollowerRepositoryPort {
 
   private async markLost(
     manager: EntityManager,
-    userId: string,
+    profileId: string,
     changes: SnapshotChangeSet,
   ): Promise<void> {
     for (const batch of chunk(changes.lostUsernames)) {
       await manager.update(
         FollowerOrmEntity,
-        { userId, username: In(batch) },
+        { profileId, username: In(batch) },
         { status: FollowerStatus.LOST, lostAt: changes.observedAt },
       );
     }
   }
 
-  async countByStatus(userId: string): Promise<FollowerCounts> {
+  async countByStatus(profileId: string): Promise<FollowerCounts> {
     const rows = await this.followers
       .createQueryBuilder("f")
       .select("f.status", "status")
       .addSelect("COUNT(*)::int", "count")
-      .where("f.idtb_users = :userId", { userId })
+      .where("f.idtb_profiles = :profileId", { profileId })
       .groupBy("f.status")
       .getRawMany<{ status: FollowerStatus; count: number }>();
 
@@ -137,25 +137,25 @@ export class FollowerTypeormRepository implements FollowerRepositoryPort {
   }
 
   countEventsSince(
-    userId: string,
+    profileId: string,
     type: FollowerEventType,
     since: Date,
   ): Promise<number> {
     return this.events
       .createQueryBuilder("e")
-      .where("e.idtb_users = :userId", { userId })
+      .where("e.idtb_profiles = :profileId", { profileId })
       .andWhere("e.type = :type", { type })
       .andWhere("e.occurred_at >= :since", { since })
       .getCount();
   }
 
   async list(
-    userId: string,
+    profileId: string,
     filters: ListFollowersFilters,
   ): Promise<Paginated<FollowerView>> {
     const query = this.followers
       .createQueryBuilder("f")
-      .where("f.idtb_users = :userId", { userId });
+      .where("f.idtb_profiles = :profileId", { profileId });
 
     if (filters.status) {
       query.andWhere("f.status = :status", { status: filters.status });
@@ -183,17 +183,20 @@ export class FollowerTypeormRepository implements FollowerRepositoryPort {
   }
 
   async listEvents(
-    userId: string,
+    profileId: string,
     filters: ListFollowerEventsFilters,
   ): Promise<Paginated<FollowerEventView>> {
     const query = this.events
       .createQueryBuilder("e")
-      .where("e.idtb_users = :userId", { userId });
+      .where("e.idtb_profiles = :profileId", { profileId });
     if (filters.type) {
       query.andWhere("e.type = :type", { type: filters.type });
     }
     if (filters.username) {
       query.andWhere("e.username = :username", { username: filters.username });
+    }
+    if (filters.since) {
+      query.andWhere("e.occurred_at >= :since", { since: filters.since });
     }
 
     const [rows, total] = await query
@@ -206,14 +209,18 @@ export class FollowerTypeormRepository implements FollowerRepositoryPort {
     return paginate(rows.map(toEventView), total, filters);
   }
 
+  countEvents(profileId: string, type?: FollowerEventType): Promise<number> {
+    return this.events.countBy(type ? { profileId, type } : { profileId });
+  }
+
   async listFilterOptions(
-    userId: string,
+    profileId: string,
     criteria: { status?: FollowerStatus; search?: string; limit: number },
   ): Promise<FollowerFilterOption[]> {
     const query = this.followers
       .createQueryBuilder("f")
       .select('f.username AS "username"')
-      .where("f.idtb_users = :userId", { userId });
+      .where("f.idtb_profiles = :profileId", { profileId });
     if (criteria.status) {
       query.andWhere("f.status = :status", { status: criteria.status });
     }
@@ -229,14 +236,14 @@ export class FollowerTypeormRepository implements FollowerRepositoryPort {
   }
 
   async listEventFilterOptions(
-    userId: string,
+    profileId: string,
     criteria: { type?: FollowerEventType; search?: string; limit: number },
   ): Promise<FollowerFilterOption[]> {
     const query = this.events
       .createQueryBuilder("e")
       .select("e.username", "username")
       .distinct(true)
-      .where("e.idtb_users = :userId", { userId });
+      .where("e.idtb_profiles = :profileId", { profileId });
     if (criteria.type) {
       query.andWhere("e.type = :type", { type: criteria.type });
     }
@@ -251,16 +258,16 @@ export class FollowerTypeormRepository implements FollowerRepositoryPort {
       .getRawMany<FollowerFilterOption>();
   }
 
-  existsByUsername(userId: string, username: string): Promise<boolean> {
-    return this.followers.existsBy({ userId, username });
+  existsByUsername(profileId: string, username: string): Promise<boolean> {
+    return this.followers.existsBy({ profileId, username });
   }
 
   async findUnnotifiedEvents(
-    userId: string,
+    profileId: string,
     type: FollowerEventType,
   ): Promise<FollowerEventView[]> {
     const rows = await this.events.find({
-      where: { userId, type, notifiedAt: IsNull() },
+      where: { profileId, type, notifiedAt: IsNull() },
       order: { occurredAt: "ASC" },
       take: 500,
     });
@@ -268,13 +275,13 @@ export class FollowerTypeormRepository implements FollowerRepositoryPort {
   }
 
   async markEventsNotified(
-    userId: string,
+    profileId: string,
     ids: string[],
     at: Date,
   ): Promise<void> {
     for (const batch of chunk(ids)) {
       await this.events.update(
-        { userId, id: In(batch), notifiedAt: IsNull() },
+        { profileId, id: In(batch), notifiedAt: IsNull() },
         { notifiedAt: at },
       );
     }

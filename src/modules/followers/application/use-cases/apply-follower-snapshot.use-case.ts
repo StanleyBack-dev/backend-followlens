@@ -46,10 +46,10 @@ export class ApplyFollowerSnapshotUseCase {
 
   /** @throws SnapshotRejectedError when the snapshot looks wrong. */
   async execute(
-    userId: string,
+    profileId: string,
     command: ApplyFollowerSnapshotCommand,
   ): Promise<ApplyFollowerSnapshotResult> {
-    const known = await this.followers.findAllKnown(userId);
+    const known = await this.followers.findAllKnown(profileId);
     const baseline = known.length === 0;
     const diff = computeFollowerDiff(known, command.entries);
     const activeCount = known.filter(
@@ -83,7 +83,7 @@ export class ApplyFollowerSnapshotUseCase {
           ),
         ];
 
-    await this.followers.applyChangeSet(userId, {
+    await this.followers.applyChangeSet(profileId, {
       observedAt: this.clock.now(),
       current: diff.current,
       lostUsernames: diff.lost.map((f) => f.username),

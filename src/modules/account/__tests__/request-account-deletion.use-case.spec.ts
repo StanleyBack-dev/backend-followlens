@@ -1,6 +1,7 @@
 import { AppException } from "@/common/exceptions/app-exception";
 import type { GetAccountProfileUseCase } from "@/modules/account/application/use-cases/get-account-profile.use-case";
 import { RequestAccountDeletionUseCase } from "@/modules/account/application/use-cases/request-account-deletion.use-case";
+import type { RenewingSubscriptionChecker } from "@/modules/billing/application/renewing-subscription.checker";
 import type { SendAccountDeletionEmailUseCase } from "@/modules/mails/application/use-cases/send-account-deletion-email.use-case";
 import type { UserRepositoryPort } from "@/modules/users/application/ports/user-repository.port";
 import type { ClockPort } from "@/shared/application/ports/clock.port";
@@ -8,7 +9,13 @@ import type { ClockPort } from "@/shared/application/ports/clock.port";
 const NOW = new Date("2026-10-03T12:00:00.000Z");
 const EMAIL = "ana@test.com";
 
-function setup(options: { scheduledFor?: Date; mailFails?: boolean } = {}) {
+function setup(
+  options: {
+    scheduledFor?: Date;
+    mailFails?: boolean;
+    renewing?: boolean;
+  } = {},
+) {
   const users = {
     findById: jest.fn(async (id: string) => ({
       id,
@@ -28,12 +35,17 @@ function setup(options: { scheduledFor?: Date; mailFails?: boolean } = {}) {
     }),
   } as unknown as SendAccountDeletionEmailUseCase;
 
+  const renewing = {
+    isRenewing: jest.fn(async () => options.renewing ?? false),
+  } as unknown as RenewingSubscriptionChecker;
+
   const useCase = new RequestAccountDeletionUseCase(
     users,
     { deletionGraceDays: 7 },
     clock,
     getProfile,
     mail,
+    renewing,
   );
   return { useCase, users, mail };
 }
@@ -81,6 +93,15 @@ describe("RequestAccountDeletionUseCase", () => {
     expect(users.scheduleDeletion).not.toHaveBeenCalled();
     expect(mail.execute).not.toHaveBeenCalled();
     expect(result.emailSent).toBe(false);
+  });
+
+  it("refuses while a subscription is still renewing", async () => {
+    const { useCase, users } = setup({ renewing: true });
+
+    await expect(
+      useCase.execute("u-1", { confirmEmail: EMAIL }),
+    ).rejects.toBeInstanceOf(AppException);
+    expect(users.scheduleDeletion).not.toHaveBeenCalled();
   });
 
   it("still schedules the deletion when the e-mail fails", async () => {

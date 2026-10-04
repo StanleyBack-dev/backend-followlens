@@ -10,14 +10,18 @@ import { UnfollowAlertsUseCase } from "@/modules/followers/application/use-cases
 import { FollowerEventOrmEntity } from "@/modules/followers/infrastructure/persistence/typeorm/entities/follower-event.orm-entity";
 import { FollowerOrmEntity } from "@/modules/followers/infrastructure/persistence/typeorm/entities/follower.orm-entity";
 import { FollowerTypeormRepository } from "@/modules/followers/infrastructure/persistence/typeorm/repositories/follower-typeorm.repository";
+import { ProfilesModule } from "@/modules/profiles/profiles.module";
+import { planLimitsProvider } from "@/shared/application/plan-limits.config";
 import { FollowersController } from "@/modules/followers/presentation/rest/followers.controller";
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([FollowerOrmEntity, FollowerEventOrmEntity]),
+    ProfilesModule,
   ],
   controllers: [FollowersController],
   providers: [
+    planLimitsProvider,
     { provide: FOLLOWER_REPOSITORY, useClass: FollowerTypeormRepository },
     ApplyFollowerSnapshotUseCase,
     GetFollowersOverviewUseCase,
