@@ -174,9 +174,14 @@ export class SubscribeToProUseCase {
     }
   }
 
-  // The gateway only accepts an https return URL on a registered domain, so
-  // local development simply has no redirect back.
+  // The gateway rejects the whole request unless the return URL is https and
+  // on the domain registered in the gateway account, so the redirect back is
+  // opt-in. Without it the customer returns on their own and the page picks
+  // the payment up by polling.
   private successUrl(): string | undefined {
+    if (this.config.get<boolean>("BILLING_CHECKOUT_RETURN_ENABLED") !== true) {
+      return undefined;
+    }
     const frontendUrl = (this.config.get<string>("FRONTEND_URL") ?? "").replace(
       /\/$/,
       "",
