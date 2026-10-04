@@ -48,12 +48,16 @@ export type ListUsersFilters = PageRequest & {
 export type UserCounts = {
   total: number;
   admins: number;
+  /** Users whose plan is Pro (paid or granted by an admin). */
+  pro: number;
   activeLast30Days: number;
 };
 
 export interface UserRepositoryPort {
   findById(id: string): Promise<UserView | null>;
   findByEmail(email: string): Promise<UserView | null>;
+  /** Unknown or malformed ids are simply left out. */
+  findByIds(ids: string[]): Promise<UserView[]>;
   /**
    * Creates the user on first sign-in, or refreshes picture + last login. The
    * name is only taken from Google on creation (the user can edit it later).

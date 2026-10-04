@@ -10,13 +10,22 @@ import {
 } from "@nestjs/common";
 import { AdminGuard } from "@/common/security/admin.guard";
 import type { AdminUserRow } from "@/modules/admin/application/list-users.use-case";
+import {
+  type AdminDashboard,
+  GetAdminDashboardUseCase,
+} from "@/modules/admin/application/get-admin-dashboard.use-case";
 import { GetAdminOverviewUseCase } from "@/modules/admin/application/get-admin-overview.use-case";
 import { ListUsersUseCase } from "@/modules/admin/application/list-users.use-case";
 import { UpdateUserAccessUseCase } from "@/modules/admin/application/update-user-access.use-case";
 import {
+  ListSubscriptionsQueryDto,
   ListUsersQueryDto,
   UpdateUserAccessDto,
 } from "@/modules/admin/presentation/rest/dtos/admin.dtos";
+import {
+  type AdminSubscriptionRow,
+  AdminSubscriptionsQuery,
+} from "@/modules/billing/application/admin-subscriptions.query";
 import type { UserCounts } from "@/modules/users/application/ports/user-repository.port";
 import type { Paginated } from "@/shared/application/pagination";
 
@@ -28,11 +37,26 @@ export class AdminController {
     private readonly listUsers: ListUsersUseCase,
     private readonly overview: GetAdminOverviewUseCase,
     private readonly updateAccess: UpdateUserAccessUseCase,
+    private readonly dashboard: GetAdminDashboardUseCase,
+    private readonly subscriptionsQuery: AdminSubscriptionsQuery,
   ) {}
 
   @Get("overview")
   getOverview(): Promise<UserCounts> {
     return this.overview.execute();
+  }
+
+  /** Numbers for the admin home: users, subscriptions and support. */
+  @Get("dashboard")
+  getDashboard(): Promise<AdminDashboard> {
+    return this.dashboard.execute();
+  }
+
+  @Get("subscriptions")
+  subscriptions(
+    @Query() query: ListSubscriptionsQueryDto,
+  ): Promise<Paginated<AdminSubscriptionRow>> {
+    return this.subscriptionsQuery.list(query);
   }
 
   @Get("users")

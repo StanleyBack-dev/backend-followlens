@@ -6,6 +6,7 @@ import { followersErrors } from "@/common/exceptions/catalogs/followers-errors.c
 import { importsErrors } from "@/common/exceptions/catalogs/imports-errors.catalog";
 import { mailsErrors } from "@/common/exceptions/catalogs/mails-errors.catalog";
 import { profilesErrors } from "@/common/exceptions/catalogs/profiles-errors.catalog";
+import { supportErrors } from "@/common/exceptions/catalogs/support-errors.catalog";
 import { syncErrors } from "@/common/exceptions/catalogs/sync-errors.catalog";
 
 export const APP_ERRORS = {
@@ -16,5 +17,6 @@ export const APP_ERRORS = {
   imports: importsErrors,
   mails: mailsErrors,
   profiles: profilesErrors,
+  support: supportErrors,
   sync: syncErrors,
 } as const satisfies Record<string, Record<string, AppErrorDefinition<never>>>;
