@@ -54,6 +54,10 @@ export const envValidationSchema = Joi.object({
   PRO_PLAN_PRICE_YEARLY: Joi.number().positive().default(119.9),
   // Days an overdue subscription keeps Pro before going back to Free.
   BILLING_PAST_DUE_GRACE_DAYS: Joi.number().integer().min(0).max(30).default(3),
+  // Send the customer back to the app after paying the hosted invoice. Asaas
+  // only accepts it when FRONTEND_URL is on the domain registered in the
+  // account ("Minha Conta" > "Informações"); otherwise the checkout fails.
+  BILLING_CHECKOUT_RETURN_ENABLED: bool().default(false),
   // Offer Pix Automático at checkout. Asaas enables it per account, so it
   // stays off until the account has it.
   BILLING_PIX_AUTOMATIC_ENABLED: bool().default(false),
