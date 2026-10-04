@@ -18,6 +18,7 @@ import {
 } from "@/modules/auth/presentation/rest/dtos/google-login.dto";
 import { CURRENT_LEGAL_VERSION } from "@/modules/legal/domain/legal-version.constant";
 import { AdminPolicyService } from "@/modules/users/application/admin-policy.service";
+import { hasProAccess } from "@/modules/users/domain/plan-access";
 import {
   USER_REPOSITORY,
   type UserRepositoryPort,
@@ -49,6 +50,7 @@ export class AuthController {
         role: user.role,
         isAdmin,
         isMaster: this.adminPolicy.isMaster(user.email),
+        isPro: hasProAccess({ plan: user.plan, isAdmin }),
         termsAccepted: user.termsVersion === CURRENT_LEGAL_VERSION,
         legalVersion: CURRENT_LEGAL_VERSION,
         deletionScheduledFor: user.deletionScheduledFor?.toISOString() ?? null,
@@ -68,6 +70,7 @@ export class AuthController {
       role: current.role,
       isAdmin: current.isAdmin,
       isMaster: current.isMaster,
+      isPro: hasProAccess(current),
       termsAccepted: user?.termsVersion === CURRENT_LEGAL_VERSION,
       legalVersion: CURRENT_LEGAL_VERSION,
       deletionScheduledFor: user?.deletionScheduledFor?.toISOString() ?? null,

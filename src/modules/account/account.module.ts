@@ -12,11 +12,12 @@ import { RequestAccountDeletionUseCase } from "@/modules/account/application/use
 import { UpdateAccountProfileUseCase } from "@/modules/account/application/use-cases/update-account-profile.use-case";
 import { AccountController } from "@/modules/account/presentation/rest/account.controller";
 import { InternalAccountController } from "@/modules/account/presentation/rest/internal-account.controller";
+import { BillingModule } from "@/modules/billing/billing.module";
 import { MailModule } from "@/modules/mails/mail.module";
 import { UsersModule } from "@/modules/users/users.module";
 
 @Module({
-  imports: [UsersModule, MailModule],
+  imports: [UsersModule, MailModule, BillingModule],
   controllers: [AccountController, InternalAccountController],
   providers: [
     {
@@ -31,5 +32,7 @@ import { UsersModule } from "@/modules/users/users.module";
     PurgeDeletedAccountsUseCase,
     CronSecretGuard,
   ],
+  // The daily maintenance job runs the purge.
+  exports: [PurgeDeletedAccountsUseCase],
 })
 export class AccountModule {}

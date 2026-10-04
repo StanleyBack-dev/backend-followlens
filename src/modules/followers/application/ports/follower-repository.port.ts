@@ -48,6 +48,8 @@ export type ListFollowersFilters = PageRequest & {
 export type ListFollowerEventsFilters = PageRequest & {
   type?: FollowerEventType;
   username?: string;
+  /** Only events from this instant on. */
+  since?: Date;
 };
 
 /** One entry of the "filter by follower" combobox. */
@@ -60,39 +62,41 @@ export type FollowerCounts = {
   lost: number;
 };
 
-// Every method is scoped to a single owner user id.
+// Every method is scoped to a single profile id.
 export interface FollowerRepositoryPort {
-  findAllKnown(userId: string): Promise<KnownFollower[]>;
+  findAllKnown(profileId: string): Promise<KnownFollower[]>;
   /** Persists the whole change set atomically (single transaction). */
-  applyChangeSet(userId: string, changes: SnapshotChangeSet): Promise<void>;
-  countByStatus(userId: string): Promise<FollowerCounts>;
+  applyChangeSet(profileId: string, changes: SnapshotChangeSet): Promise<void>;
+  countByStatus(profileId: string): Promise<FollowerCounts>;
   countEventsSince(
-    userId: string,
+    profileId: string,
     type: FollowerEventType,
     since: Date,
   ): Promise<number>;
   list(
-    userId: string,
+    profileId: string,
     filters: ListFollowersFilters,
   ): Promise<Paginated<FollowerView>>;
   listEvents(
-    userId: string,
+    profileId: string,
     filters: ListFollowerEventsFilters,
   ): Promise<Paginated<FollowerEventView>>;
+  /** Total events of the user, optionally of a single type. */
+  countEvents(profileId: string, type?: FollowerEventType): Promise<number>;
   listFilterOptions(
-    userId: string,
+    profileId: string,
     criteria: { status?: FollowerStatus; search?: string; limit: number },
   ): Promise<FollowerFilterOption[]>;
   listEventFilterOptions(
-    userId: string,
+    profileId: string,
     criteria: { type?: FollowerEventType; search?: string; limit: number },
   ): Promise<FollowerFilterOption[]>;
-  existsByUsername(userId: string, username: string): Promise<boolean>;
+  existsByUsername(profileId: string, username: string): Promise<boolean>;
   findUnnotifiedEvents(
-    userId: string,
+    profileId: string,
     type: FollowerEventType,
   ): Promise<FollowerEventView[]>;
-  markEventsNotified(userId: string, ids: string[], at: Date): Promise<void>;
+  markEventsNotified(profileId: string, ids: string[], at: Date): Promise<void>;
 }
 
 export const FOLLOWER_REPOSITORY = Symbol("FOLLOWER_REPOSITORY");

@@ -15,15 +15,20 @@ export type ImportView = {
 };
 
 export type RecordImportInput = Omit<ImportView, "id"> & {
-  userId: string;
+  profileId: string;
   localDate: string;
 };
 
 export interface ImportRepositoryPort {
   record(input: RecordImportInput): Promise<ImportView>;
-  countCompletedOn(userId: string, localDate: string): Promise<number>;
-  findLatestCompleted(userId: string): Promise<ImportView | null>;
-  list(userId: string, request: PageRequest): Promise<Paginated<ImportView>>;
+  countCompletedOn(profileId: string, localDate: string): Promise<number>;
+  findLatestCompleted(profileId: string): Promise<ImportView | null>;
+  /**
+   * When the latest import that counts against the Free interval finished
+   * (completed and not the baseline), or null when there is none.
+   */
+  findLastComparisonAt(profileId: string): Promise<Date | null>;
+  list(profileId: string, request: PageRequest): Promise<Paginated<ImportView>>;
 }
 
 export const IMPORT_REPOSITORY = Symbol("IMPORT_REPOSITORY");

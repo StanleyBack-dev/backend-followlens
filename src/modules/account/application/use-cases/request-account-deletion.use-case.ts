@@ -7,6 +7,7 @@ import {
   type AccountSettings,
 } from "@/modules/account/application/account.config";
 import { GetAccountProfileUseCase } from "@/modules/account/application/use-cases/get-account-profile.use-case";
+import { RenewingSubscriptionChecker } from "@/modules/billing/application/renewing-subscription.checker";
 import { SendAccountDeletionEmailUseCase } from "@/modules/mails/application/use-cases/send-account-deletion-email.use-case";
 import {
   USER_REPOSITORY,
@@ -39,6 +40,7 @@ export class RequestAccountDeletionUseCase {
     @Inject(CLOCK) private readonly clock: ClockPort,
     private readonly getProfile: GetAccountProfileUseCase,
     private readonly deletionEmail: SendAccountDeletionEmailUseCase,
+    private readonly renewing: RenewingSubscriptionChecker,
   ) {}
 
   async execute(
@@ -64,6 +66,12 @@ export class RequestAccountDeletionUseCase {
         profile: await this.getProfile.execute(userId),
         emailSent: false,
       };
+    }
+
+    // Deleting the account does not stop the gateway from charging, so a
+    // subscription that is still renewing has to be canceled first.
+    if (await this.renewing.isRenewing(userId)) {
+      throw AppException.from(APP_ERRORS.account.activeSubscription, undefined);
     }
 
     const now = this.clock.now();

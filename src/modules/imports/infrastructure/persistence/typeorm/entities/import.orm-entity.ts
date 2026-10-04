@@ -4,14 +4,14 @@ import { ImportStatus } from "@/modules/imports/domain/enums/import-status.enum"
 // One record per upload processed (or rejected). Drives the daily limit and
 // the history shown in the panel.
 @Entity("tb_imports")
-@Index("IDX_imports_user_local_date", ["userId", "localDate"])
-@Index("IDX_imports_user_created", ["userId", "createdAt"])
+@Index("IDX_imports_profile_local_date", ["profileId", "localDate"])
+@Index("IDX_imports_profile_created", ["profileId", "createdAt"])
 export class ImportOrmEntity {
   @PrimaryGeneratedColumn("uuid", { name: "idtb_imports" })
   id!: string;
 
-  @Column({ name: "idtb_users", type: "uuid" })
-  userId!: string;
+  @Column({ name: "idtb_profiles", type: "uuid" })
+  profileId!: string;
 
   @Column({ type: "varchar", length: 16 })
   status!: ImportStatus;

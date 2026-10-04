@@ -41,6 +41,30 @@ export const envValidationSchema = Joi.object({
   // Days between a deletion request and the actual removal of the account.
   ACCOUNT_DELETION_GRACE_DAYS: Joi.number().integer().min(1).max(90).default(7),
 
+  // === BILLING (Asaas) ===
+  // Without the API key the checkout answers 503; the rest of the app works.
+  ASAAS_API_KEY: Joi.string().min(10).allow("").optional(),
+  ASAAS_ENVIRONMENT: Joi.string()
+    .valid("sandbox", "production")
+    .default("sandbox"),
+  // Sent by Asaas as the `asaas-access-token` header on every webhook call.
+  // When unset, the webhook rejects every request.
+  ASAAS_WEBHOOK_TOKEN: Joi.string().min(32).allow("").optional(),
+  PRO_PLAN_PRICE_MONTHLY: Joi.number().positive().default(14.9),
+  PRO_PLAN_PRICE_YEARLY: Joi.number().positive().default(119.9),
+  // Days an overdue subscription keeps Pro before going back to Free.
+  BILLING_PAST_DUE_GRACE_DAYS: Joi.number().integer().min(0).max(30).default(3),
+  // Offer Pix Automático at checkout. Asaas enables it per account, so it
+  // stays off until the account has it.
+  BILLING_PIX_AUTOMATIC_ENABLED: bool().default(false),
+
+  // === FREE PLAN LIMITS ===
+  FREE_IMPORT_INTERVAL_DAYS: Joi.number().integer().min(0).max(90).default(7),
+  FREE_HISTORY_DAYS: Joi.number().integer().min(1).max(365).default(30),
+  // Instagram profiles one account may track.
+  FREE_PROFILE_LIMIT: Joi.number().integer().min(1).max(20).default(1),
+  PRO_PROFILE_LIMIT: Joi.number().integer().min(1).max(20).default(3),
+
   // === INSTAGRAM SESSION (optional — automatic mode) ===
   // The session-based sync only runs when these are set; the import mode works
   // without them. Cookies from DevTools > Application > Cookies.

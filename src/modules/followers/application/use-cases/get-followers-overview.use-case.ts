@@ -24,22 +24,30 @@ export class GetFollowersOverviewUseCase {
     @Inject(CLOCK) private readonly clock: ClockPort,
   ) {}
 
-  async execute(userId: string): Promise<FollowersOverview> {
+  async execute(profileId: string): Promise<FollowersOverview> {
     const now = this.clock.now().getTime();
     const since7 = new Date(now - 7 * DAY_MS);
     const since30 = new Date(now - 30 * DAY_MS);
 
     const [counts, lost7, lost30, gained30, returned30] = await Promise.all([
-      this.followers.countByStatus(userId),
-      this.followers.countEventsSince(userId, FollowerEventType.LOST, since7),
-      this.followers.countEventsSince(userId, FollowerEventType.LOST, since30),
+      this.followers.countByStatus(profileId),
       this.followers.countEventsSince(
-        userId,
+        profileId,
+        FollowerEventType.LOST,
+        since7,
+      ),
+      this.followers.countEventsSince(
+        profileId,
+        FollowerEventType.LOST,
+        since30,
+      ),
+      this.followers.countEventsSince(
+        profileId,
         FollowerEventType.GAINED,
         since30,
       ),
       this.followers.countEventsSince(
-        userId,
+        profileId,
         FollowerEventType.RETURNED,
         since30,
       ),

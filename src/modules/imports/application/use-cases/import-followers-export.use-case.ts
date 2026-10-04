@@ -21,19 +21,42 @@ import {
 import { ImportStatus } from "@/modules/imports/domain/enums/import-status.enum";
 import { ExportParseError } from "@/modules/imports/domain/instagram-export.parser";
 import { NotifyPendingUnfollowsUseCase } from "@/modules/notifications/notify-pending-unfollows.use-case";
+import {
+  PLAN_LIMITS,
+  type PlanLimits,
+} from "@/shared/application/plan-limits.config";
 import { CLOCK, type ClockPort } from "@/shared/application/ports/clock.port";
 import { LOCK, type LockPort } from "@/shared/application/ports/lock.port";
 
 const LOCK_LEASE_MS = 60_000;
+const DAY_MS = 86_400_000;
 
-export type ImportActor = { id: string; email: string };
+export type ImportActor = {
+  /** The profile the file is imported into. */
+  profileId: string;
+  /** Where the unfollow alert goes. */
+  email: string;
+  /** Pro access lifts the Free interval and enables the e-mail alert. */
+  pro: boolean;
+};
+
+/** When a Free user may import again, or null when there is no wait. */
+export function nextFreeImportAt(
+  lastComparisonAt: Date | null,
+  intervalDays: number,
+  now: Date,
+): Date | null {
+  if (!lastComparisonAt || intervalDays <= 0) return null;
+  const next = new Date(lastComparisonAt.getTime() + intervalDays * DAY_MS);
+  return next > now ? next : null;
+}
 
 export type ImportResult = {
   import: ImportView;
   emailsSent: number;
 };
 
-// Orchestrates one upload for a specific user: lock → daily limit → parse →
+// Orchestrates one upload into a specific profile: lock → limits → parse →
 // diff/apply → notify. A failed attempt is recorded but does NOT consume the
 // daily limit (only completed imports count).
 @Injectable()
@@ -46,6 +69,7 @@ export class ImportFollowersExportUseCase {
     @Inject(CLOCK) private readonly clock: ClockPort,
     private readonly applySnapshot: ApplyFollowerSnapshotUseCase,
     private readonly notifier: NotifyPendingUnfollowsUseCase,
+    @Inject(PLAN_LIMITS) private readonly planLimits: PlanLimits,
   ) {}
 
   async execute(actor: ImportActor, file: UploadedFile): Promise<ImportResult> {
@@ -56,7 +80,7 @@ export class ImportFollowersExportUseCase {
     }
 
     const holder = randomUUID();
-    const lockName = `followers-import:${actor.id}`;
+    const lockName = `followers-import:${actor.profileId}`;
     if (!(await this.lock.tryAcquire(lockName, holder, LOCK_LEASE_MS))) {
       throw AppException.from(APP_ERRORS.imports.alreadyRunning, undefined);
     }
@@ -64,7 +88,7 @@ export class ImportFollowersExportUseCase {
     try {
       const localDate = this.clock.localDate();
       if (
-        (await this.imports.countCompletedOn(actor.id, localDate)) >=
+        (await this.imports.countCompletedOn(actor.profileId, localDate)) >=
         this.settings.dailyLimit
       ) {
         throw AppException.from(
@@ -73,10 +97,12 @@ export class ImportFollowersExportUseCase {
         );
       }
 
+      if (!actor.pro) await this.assertFreeIntervalElapsed(actor.profileId);
+
       const entries = this.parse(file);
       if (entries.length === 0) {
         await this.recordFailure(
-          actor.id,
+          actor.profileId,
           file,
           "IMPORT_EMPTY_FOLLOWERS",
           localDate,
@@ -84,14 +110,36 @@ export class ImportFollowersExportUseCase {
         throw AppException.from(APP_ERRORS.imports.emptyFollowers, undefined);
       }
 
-      const result = await this.apply(actor.id, file, entries, localDate);
-      const emailsSent = await this.notifier.executeSafely(
-        actor.id,
-        actor.email,
+      const result = await this.apply(
+        actor.profileId,
+        file,
+        entries,
+        localDate,
       );
+      // The e-mail alert is a Pro feature; on Free the events are settled
+      // silently so an upgrade later doesn't e-mail the whole backlog.
+      const emailsSent = actor.pro
+        ? await this.notifier.executeSafely(actor.profileId, actor.email)
+        : await this.notifier.dismissSafely(actor.profileId);
       return { import: result, emailsSent };
     } finally {
       await this.lock.release(lockName, holder);
+    }
+  }
+
+  private async assertFreeIntervalElapsed(profileId: string): Promise<void> {
+    const days = this.planLimits.freeImportIntervalDays;
+    const nextAllowedAt = nextFreeImportAt(
+      await this.imports.findLastComparisonAt(profileId),
+      days,
+      this.clock.now(),
+    );
+    if (nextAllowedAt) {
+      throw AppException.from(
+        APP_ERRORS.imports.planIntervalNotElapsed,
+        { days },
+        { nextAllowedAt: nextAllowedAt.toISOString() },
+      );
     }
   }
 
@@ -112,18 +160,18 @@ export class ImportFollowersExportUseCase {
   }
 
   private async apply(
-    userId: string,
+    profileId: string,
     file: UploadedFile,
     entries: { username: string; followedAt: Date | null }[],
     localDate: string,
   ): Promise<ImportView> {
     try {
-      const outcome = await this.applySnapshot.execute(userId, {
+      const outcome = await this.applySnapshot.execute(profileId, {
         importId: randomUUID(),
         entries,
       });
       return this.imports.record({
-        userId,
+        profileId,
         status: ImportStatus.COMPLETED,
         filename: this.safeName(file.filename),
         followersCount: outcome.collected,
@@ -138,7 +186,7 @@ export class ImportFollowersExportUseCase {
     } catch (error) {
       if (error instanceof SnapshotRejectedError) {
         await this.recordFailure(
-          userId,
+          profileId,
           file,
           "IMPORT_SNAPSHOT_REJECTED",
           localDate,
@@ -153,14 +201,14 @@ export class ImportFollowersExportUseCase {
   }
 
   private async recordFailure(
-    userId: string,
+    profileId: string,
     file: UploadedFile,
     code: string,
     localDate: string,
     message?: string,
   ): Promise<void> {
     await this.imports.record({
-      userId,
+      profileId,
       status: ImportStatus.FAILED,
       filename: this.safeName(file.filename),
       followersCount: null,

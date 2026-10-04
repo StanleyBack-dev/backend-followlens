@@ -17,12 +17,19 @@ export class UnfollowAlertsUseCase {
     @Inject(CLOCK) private readonly clock: ClockPort,
   ) {}
 
-  pending(userId: string): Promise<FollowerEventView[]> {
-    return this.followers.findUnnotifiedEvents(userId, FollowerEventType.LOST);
+  pending(profileId: string): Promise<FollowerEventView[]> {
+    return this.followers.findUnnotifiedEvents(
+      profileId,
+      FollowerEventType.LOST,
+    );
   }
 
-  async markSent(userId: string, eventIds: string[]): Promise<void> {
+  async markSent(profileId: string, eventIds: string[]): Promise<void> {
     if (eventIds.length === 0) return;
-    await this.followers.markEventsNotified(userId, eventIds, this.clock.now());
+    await this.followers.markEventsNotified(
+      profileId,
+      eventIds,
+      this.clock.now(),
+    );
   }
 }

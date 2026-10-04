@@ -28,11 +28,11 @@ export class ListFollowerFilterOptionsUseCase {
   ) {}
 
   async forFollowers(
-    userId: string,
+    profileId: string,
     criteria: { status?: FollowerStatus; search?: string } = {},
   ): Promise<FollowerFilterOptions> {
     return this.wrap(
-      await this.followers.listFilterOptions(userId, {
+      await this.followers.listFilterOptions(profileId, {
         status: criteria.status,
         search: normalizeOptionSearch(criteria.search),
         limit: MAX_FILTER_OPTIONS + 1,
@@ -41,11 +41,11 @@ export class ListFollowerFilterOptionsUseCase {
   }
 
   async forEvents(
-    userId: string,
+    profileId: string,
     criteria: { type?: FollowerEventType; search?: string } = {},
   ): Promise<FollowerFilterOptions> {
     return this.wrap(
-      await this.followers.listEventFilterOptions(userId, {
+      await this.followers.listEventFilterOptions(profileId, {
         type: criteria.type,
         search: normalizeOptionSearch(criteria.search),
         limit: MAX_FILTER_OPTIONS + 1,

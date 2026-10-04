@@ -13,9 +13,9 @@ export class ListImportsUseCase {
   ) {}
 
   execute(
-    userId: string,
+    profileId: string,
     request: PageRequest,
   ): Promise<Paginated<ImportView>> {
-    return this.imports.list(userId, request);
+    return this.imports.list(profileId, request);
   }
 }

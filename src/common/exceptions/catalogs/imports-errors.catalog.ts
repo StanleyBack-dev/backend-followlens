@@ -29,6 +29,12 @@ export const importsErrors = {
     status: HttpStatus.TOO_MANY_REQUESTS,
     message: "Limite diário de importações atingido. Tente novamente amanhã.",
   },
+  planIntervalNotElapsed: {
+    code: "IMPORT_PLAN_INTERVAL_NOT_ELAPSED",
+    status: HttpStatus.TOO_MANY_REQUESTS,
+    message: (params: { days: number }) =>
+      `No plano Free é possível importar uma vez a cada ${params.days} dias. Assine o Pro para importar sem espera.`,
+  },
   alreadyRunning: {
     code: "IMPORT_ALREADY_RUNNING",
     status: HttpStatus.CONFLICT,

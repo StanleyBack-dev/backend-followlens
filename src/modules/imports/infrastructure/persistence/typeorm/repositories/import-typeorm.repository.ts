@@ -26,28 +26,36 @@ export class ImportTypeormRepository implements ImportRepositoryPort {
     return toView(saved);
   }
 
-  countCompletedOn(userId: string, localDate: string): Promise<number> {
+  countCompletedOn(profileId: string, localDate: string): Promise<number> {
     return this.repository.countBy({
-      userId,
+      profileId,
       localDate,
       status: ImportStatus.COMPLETED,
     });
   }
 
-  async findLatestCompleted(userId: string): Promise<ImportView | null> {
+  async findLatestCompleted(profileId: string): Promise<ImportView | null> {
     const row = await this.repository.findOne({
-      where: { userId, status: ImportStatus.COMPLETED },
+      where: { profileId, status: ImportStatus.COMPLETED },
       order: { createdAt: "DESC" },
     });
     return row ? toView(row) : null;
   }
 
+  async findLastComparisonAt(profileId: string): Promise<Date | null> {
+    const row = await this.repository.findOne({
+      where: { profileId, status: ImportStatus.COMPLETED, baseline: false },
+      order: { createdAt: "DESC" },
+    });
+    return row?.createdAt ?? null;
+  }
+
   async list(
-    userId: string,
+    profileId: string,
     request: PageRequest,
   ): Promise<Paginated<ImportView>> {
     const [rows, total] = await this.repository.findAndCount({
-      where: { userId },
+      where: { profileId },
       order: { createdAt: "DESC" },
       skip: (request.page - 1) * request.limit,
       take: request.limit,

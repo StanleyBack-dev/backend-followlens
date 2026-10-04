@@ -16,6 +16,8 @@ export type SessionUserResponse = {
   role: string;
   isAdmin: boolean;
   isMaster: boolean;
+  /** Pro features unlocked (paid, granted by an admin, or an admin). */
+  isPro: boolean;
   termsAccepted: boolean;
   legalVersion: string;
   /** ISO date when the account will be deleted, or null when not scheduled. */
