@@ -9,11 +9,13 @@ import { AccountModule } from "@/modules/account/account.module";
 import { AdminModule } from "@/modules/admin/admin.module";
 import { BillingModule } from "@/modules/billing/billing.module";
 import { AuthModule } from "@/modules/auth/auth.module";
+import { EngagementModule } from "@/modules/engagement/engagement.module";
 import { FollowersModule } from "@/modules/followers/followers.module";
 import { ImportsModule } from "@/modules/imports/imports.module";
 import { LegalModule } from "@/modules/legal/legal.module";
 import { MaintenanceModule } from "@/modules/maintenance/maintenance.module";
 import { ProfilesModule } from "@/modules/profiles/profiles.module";
+import { ReferralsModule } from "@/modules/referrals/referrals.module";
 import { SupportModule } from "@/modules/support/support.module";
 import { SyncModule } from "@/modules/sync/sync.module";
 import { UsersModule } from "@/modules/users/users.module";
@@ -34,6 +36,8 @@ import { SharedModule } from "@/shared/shared.module";
     LegalModule,
     ProfilesModule,
     SupportModule,
+    ReferralsModule,
+    EngagementModule,
     FollowersModule,
     ImportsModule,
     SyncModule,

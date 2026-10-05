@@ -1,7 +1,11 @@
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import type { ClockPort } from "@/shared/application/ports/clock.port";
-import { startOfNextLocalDay, toLocalDate } from "@/shared/domain/local-date";
+import {
+  startOfLocalDate,
+  startOfNextLocalDay,
+  toLocalDate,
+} from "@/shared/domain/local-date";
 
 @Injectable()
 export class SystemClock implements ClockPort {
@@ -25,5 +29,9 @@ export class SystemClock implements ClockPort {
 
   startOfNextLocalDay(date: Date = this.now()): Date {
     return startOfNextLocalDay(date, this.timeZone);
+  }
+
+  startOfLocalDate(localDate: string): Date {
+    return startOfLocalDate(localDate, this.timeZone);
   }
 }

@@ -18,7 +18,11 @@ import {
 } from "@/modules/auth/presentation/rest/dtos/google-login.dto";
 import { CURRENT_LEGAL_VERSION } from "@/modules/legal/domain/legal-version.constant";
 import { AdminPolicyService } from "@/modules/users/application/admin-policy.service";
-import { hasProAccess } from "@/modules/users/domain/plan-access";
+import {
+  hasProAccess,
+  isBonusActive,
+} from "@/modules/users/domain/plan-access";
+import { CLOCK, type ClockPort } from "@/shared/application/ports/clock.port";
 import {
   USER_REPOSITORY,
   type UserRepositoryPort,
@@ -30,13 +34,17 @@ export class AuthController {
     private readonly googleLogin: GoogleLoginUseCase,
     @Inject(USER_REPOSITORY) private readonly users: UserRepositoryPort,
     private readonly adminPolicy: AdminPolicyService,
+    @Inject(CLOCK) private readonly clock: ClockPort,
   ) {}
 
   @Public()
   @Post("google")
   @HttpCode(HttpStatus.OK)
   async google(@Body() body: GoogleLoginDto): Promise<GoogleLoginResponse> {
-    const { token, user } = await this.googleLogin.execute(body.idToken);
+    const { token, user } = await this.googleLogin.execute(
+      body.idToken,
+      body.referralCode,
+    );
     const isAdmin = user.role === "admin";
     return {
       accessToken: token.token,
@@ -50,7 +58,11 @@ export class AuthController {
         role: user.role,
         isAdmin,
         isMaster: this.adminPolicy.isMaster(user.email),
-        isPro: hasProAccess({ plan: user.plan, isAdmin }),
+        isPro: hasProAccess({
+          plan: user.plan,
+          isAdmin,
+          proBonusActive: isBonusActive(user.proBonusUntil, this.clock.now()),
+        }),
         termsAccepted: user.termsVersion === CURRENT_LEGAL_VERSION,
         legalVersion: CURRENT_LEGAL_VERSION,
         deletionScheduledFor: user.deletionScheduledFor?.toISOString() ?? null,

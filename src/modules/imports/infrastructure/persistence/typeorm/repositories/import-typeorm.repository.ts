@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import type { Repository } from "typeorm";
 import type {
+  CompletedImport,
   ImportRepositoryPort,
   ImportView,
   RecordImportInput,
@@ -48,6 +49,32 @@ export class ImportTypeormRepository implements ImportRepositoryPort {
       order: { createdAt: "DESC" },
     });
     return row?.createdAt ?? null;
+  }
+
+  async listCompleted(profileId: string): Promise<CompletedImport[]> {
+    const rows = await this.repository.find({
+      where: { profileId, status: ImportStatus.COMPLETED },
+      order: { createdAt: "ASC" },
+      select: { createdAt: true, localDate: true, followersCount: true },
+    });
+    return rows.map((row) => ({
+      createdAt: row.createdAt,
+      localDate: row.localDate,
+      followersCount: row.followersCount,
+    }));
+  }
+
+  async listProfilesWithImportsBetween(
+    from: Date,
+    to: Date,
+  ): Promise<string[]> {
+    const rows = await this.repository
+      .createQueryBuilder("i")
+      .select("DISTINCT i.idtb_profiles", "profileId")
+      .where("i.status = :status", { status: ImportStatus.COMPLETED })
+      .andWhere("i.created_at >= :from AND i.created_at < :to", { from, to })
+      .getRawMany<{ profileId: string }>();
+    return rows.map((row) => row.profileId);
   }
 
   async list(

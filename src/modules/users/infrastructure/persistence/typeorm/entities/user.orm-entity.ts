@@ -67,6 +67,29 @@ export class UserOrmEntity {
   })
   deletionScheduledFor!: Date | null;
 
+  // Pro granted for a limited time (referral rewards), on top of the plan.
+  @Column({ name: "pro_bonus_until", type: "timestamptz", nullable: true })
+  proBonusUntil!: Date | null;
+
+  @Column({
+    name: "referral_code",
+    type: "varchar",
+    length: 12,
+    nullable: true,
+  })
+  referralCode!: string | null;
+
+  @Column({ name: "referred_by_user_id", type: "uuid", nullable: true })
+  referredByUserId!: string | null;
+
+  // Set once, when the referred user's first payment settles.
+  @Column({
+    name: "referral_qualified_at",
+    type: "timestamptz",
+    nullable: true,
+  })
+  referralQualifiedAt!: Date | null;
+
   @CreateDateColumn({ name: "created_at", type: "timestamptz" })
   createdAt!: Date;
 

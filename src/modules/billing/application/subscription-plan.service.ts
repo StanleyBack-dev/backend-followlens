@@ -9,6 +9,7 @@ import {
   type SubscriptionView,
 } from "@/modules/billing/application/ports/subscription-repository.port";
 import { BillingCycle } from "@/modules/billing/domain/enums/billing-cycle.enum";
+import { ReferralRewardCoordinator } from "@/modules/billing/application/referral-reward.coordinator";
 import { SubscriptionStatus } from "@/modules/billing/domain/enums/subscription-status.enum";
 import { SendBillingEmailsUseCase } from "@/modules/mails/application/use-cases/send-billing-emails.use-case";
 import {
@@ -31,6 +32,7 @@ export class SubscriptionPlanService {
     @Inject(BILLING_SETTINGS) private readonly settings: BillingSettings,
     @Inject(CLOCK) private readonly clock: ClockPort,
     private readonly emails: SendBillingEmailsUseCase,
+    private readonly referralRewards: ReferralRewardCoordinator,
   ) {}
 
   /** A charge settled: grant (or renew) Pro up to one cycle past `paidFor`. */
@@ -59,6 +61,16 @@ export class SubscriptionPlanService {
         renewsOn: currentPeriodEnd,
       }),
     );
+    // A first-ever payment is what earns whoever invited this user a reward.
+    if (subscription.proStartedAt === null) {
+      await this.referralRewards.onFirstPayment(subscription.userId);
+    }
+  }
+
+  /** The payment was refunded: Pro goes, and so does the referral reward. */
+  async refund(subscription: SubscriptionView): Promise<void> {
+    await this.end(subscription, SubscriptionStatus.CANCELED);
+    await this.referralRewards.onRefund(subscription.userId);
   }
 
   /** A charge is overdue: Pro is kept during the grace period. */

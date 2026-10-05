@@ -2,10 +2,11 @@ import { Module } from "@nestjs/common";
 import { CronSecretGuard } from "@/common/security/cron-secret.guard";
 import { AccountModule } from "@/modules/account/account.module";
 import { BillingModule } from "@/modules/billing/billing.module";
+import { EngagementModule } from "@/modules/engagement/engagement.module";
 import { InternalMaintenanceController } from "@/modules/maintenance/internal-maintenance.controller";
 
 @Module({
-  imports: [AccountModule, BillingModule],
+  imports: [AccountModule, BillingModule, EngagementModule],
   controllers: [InternalMaintenanceController],
   providers: [CronSecretGuard],
 })

@@ -81,6 +81,13 @@ export interface FollowerRepositoryPort {
     profileId: string,
     filters: ListFollowerEventsFilters,
   ): Promise<Paginated<FollowerEventView>>;
+  /** Events of a type in [from, to). */
+  countEventsBetween(
+    profileId: string,
+    type: FollowerEventType,
+    from: Date,
+    to: Date,
+  ): Promise<number>;
   /** Total events of the user, optionally of a single type. */
   countEvents(profileId: string, type?: FollowerEventType): Promise<number>;
   listFilterOptions(

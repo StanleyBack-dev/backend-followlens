@@ -53,7 +53,7 @@ export function buildWelcomeEmail(input: WelcomeEmailInput): RenderedEmail {
     "Sua conta no FollowLens foi criada.",
     "",
     "Como começar:",
-    "1. No Instagram, exporte \"Seguidores e seguindo\" em JSON (Central de Contas → Exportar suas informações).",
+    '1. No Instagram, exporte "Seguidores e seguindo" em JSON (Central de Contas → Exportar suas informações).',
     "2. Envie o .zip no painel — a primeira importação vira a sua lista base.",
     "3. Repita quando quiser para ver quem deixou de seguir você.",
     "",

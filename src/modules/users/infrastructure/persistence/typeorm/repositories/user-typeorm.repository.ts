@@ -118,6 +118,41 @@ export class UserTypeormRepository implements UserRepositoryPort {
     return result.affected ?? 0;
   }
 
+  async setProBonusUntil(userId: string, until: Date | null): Promise<void> {
+    await this.repository.update({ id: userId }, { proBonusUntil: until });
+  }
+
+  async findByReferralCode(code: string): Promise<UserView | null> {
+    const row = await this.repository.findOneBy({ referralCode: code });
+    return row ? toView(row) : null;
+  }
+
+  async setReferralCode(userId: string, code: string): Promise<boolean> {
+    if (await this.repository.existsBy({ referralCode: code })) return false;
+    await this.repository.update({ id: userId }, { referralCode: code });
+    return true;
+  }
+
+  async setReferredBy(userId: string, referrerId: string): Promise<void> {
+    await this.repository.update(
+      { id: userId },
+      { referredByUserId: referrerId },
+    );
+  }
+
+  async markReferralQualified(userId: string, at: Date): Promise<void> {
+    await this.repository.update({ id: userId }, { referralQualifiedAt: at });
+  }
+
+  async listReferredBy(referrerId: string): Promise<UserView[]> {
+    const rows = await this.repository.find({
+      where: { referredByUserId: referrerId },
+      order: { createdAt: "DESC" },
+      take: 200,
+    });
+    return rows.map(toView);
+  }
+
   async list(filters: ListUsersFilters): Promise<Paginated<AdminUserView>> {
     const query = this.repository.createQueryBuilder("u");
     if (filters.search) {
@@ -175,6 +210,10 @@ function toView(row: UserOrmEntity): UserView {
     createdAt: row.createdAt,
     deletionRequestedAt: row.deletionRequestedAt,
     deletionScheduledFor: row.deletionScheduledFor,
+    proBonusUntil: row.proBonusUntil ?? null,
+    referralCode: row.referralCode ?? null,
+    referredByUserId: row.referredByUserId ?? null,
+    referralQualifiedAt: row.referralQualifiedAt ?? null,
   };
 }
 

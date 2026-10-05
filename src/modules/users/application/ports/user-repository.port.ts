@@ -16,6 +16,10 @@ export type UserView = {
   createdAt: Date;
   deletionRequestedAt: Date | null;
   deletionScheduledFor: Date | null;
+  proBonusUntil: Date | null;
+  referralCode: string | null;
+  referredByUserId: string | null;
+  referralQualifiedAt: Date | null;
 };
 
 /** Admin listing row (includes activity timestamps). */
@@ -79,6 +83,16 @@ export interface UserRepositoryPort {
   cancelDeletion(userId: string): Promise<void>;
   /** Removes every account whose grace period ended; returns how many. */
   purgeDueForDeletion(now: Date): Promise<number>;
+
+  // === pro bonus and referrals ===
+  setProBonusUntil(userId: string, until: Date | null): Promise<void>;
+  findByReferralCode(code: string): Promise<UserView | null>;
+  /** @returns false when the code is already taken. */
+  setReferralCode(userId: string, code: string): Promise<boolean>;
+  setReferredBy(userId: string, referrerId: string): Promise<void>;
+  markReferralQualified(userId: string, at: Date): Promise<void>;
+  /** Newest first. */
+  listReferredBy(referrerId: string): Promise<UserView[]>;
 
   // === admin ===
   list(filters: ListUsersFilters): Promise<Paginated<AdminUserView>>;

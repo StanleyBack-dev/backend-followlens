@@ -9,6 +9,8 @@ import { AdminSubscriptionsQuery } from "@/modules/billing/application/admin-sub
 import { BILLING_PAYMENT_REPOSITORY } from "@/modules/billing/application/ports/billing-payment-repository.port";
 import { PAYMENT_GATEWAY } from "@/modules/billing/application/ports/payment-gateway.port";
 import { SUBSCRIPTION_REPOSITORY } from "@/modules/billing/application/ports/subscription-repository.port";
+import { ProDaysService } from "@/modules/billing/application/pro-days.service";
+import { ReferralRewardCoordinator } from "@/modules/billing/application/referral-reward.coordinator";
 import { RenewingSubscriptionChecker } from "@/modules/billing/application/renewing-subscription.checker";
 import { SubscriptionPlanService } from "@/modules/billing/application/subscription-plan.service";
 import { CancelSubscriptionUseCase } from "@/modules/billing/application/use-cases/cancel-subscription.use-case";
@@ -26,6 +28,7 @@ import { SubscriptionTypeormRepository } from "@/modules/billing/infrastructure/
 import { AsaasWebhookController } from "@/modules/billing/presentation/rest/asaas-webhook.controller";
 import { BillingController } from "@/modules/billing/presentation/rest/billing.controller";
 import { MailModule } from "@/modules/mails/mail.module";
+import { ReferralsModule } from "@/modules/referrals/referrals.module";
 import { UsersModule } from "@/modules/users/users.module";
 import { planLimitsProvider } from "@/shared/application/plan-limits.config";
 
@@ -38,6 +41,7 @@ import { planLimitsProvider } from "@/shared/application/plan-limits.config";
     ]),
     UsersModule,
     MailModule,
+    ReferralsModule,
   ],
   controllers: [BillingController, AsaasWebhookController],
   providers: [
@@ -57,6 +61,8 @@ import { planLimitsProvider } from "@/shared/application/plan-limits.config";
     },
     { provide: PAYMENT_GATEWAY, useClass: AsaasPaymentGatewayProvider },
     SubscriptionPlanService,
+    ProDaysService,
+    ReferralRewardCoordinator,
     RenewingSubscriptionChecker,
     GetMySubscriptionUseCase,
     SubscribeToProUseCase,

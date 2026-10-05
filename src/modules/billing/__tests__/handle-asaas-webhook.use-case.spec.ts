@@ -5,6 +5,7 @@ import type {
   SubscriptionRepositoryPort,
   SubscriptionView,
 } from "@/modules/billing/application/ports/subscription-repository.port";
+import type { ReferralRewardCoordinator } from "@/modules/billing/application/referral-reward.coordinator";
 import { SubscriptionPlanService } from "@/modules/billing/application/subscription-plan.service";
 import { HandleAsaasWebhookUseCase } from "@/modules/billing/application/use-cases/handle-asaas-webhook.use-case";
 import { BillingCycle } from "@/modules/billing/domain/enums/billing-cycle.enum";
@@ -66,6 +67,11 @@ function setup(initial: Partial<SubscriptionView> = {}) {
     get: (key: string) => (key === "ASAAS_WEBHOOK_TOKEN" ? TOKEN : undefined),
   } as unknown as ConfigService;
 
+  const referralRewards = {
+    onFirstPayment: jest.fn(async () => undefined),
+    onRefund: jest.fn(async () => undefined),
+  } as unknown as ReferralRewardCoordinator & Record<string, jest.Mock>;
+
   const plan = new SubscriptionPlanService(
     subscriptions,
     users,
@@ -76,6 +82,7 @@ function setup(initial: Partial<SubscriptionView> = {}) {
     },
     clock,
     emails,
+    referralRewards,
   );
   const useCase = new HandleAsaasWebhookUseCase(
     subscriptions,
@@ -84,7 +91,14 @@ function setup(initial: Partial<SubscriptionView> = {}) {
     plan,
     config,
   );
-  return { useCase, users, emails, payments, current: () => subscription };
+  return {
+    useCase,
+    users,
+    emails,
+    payments,
+    referralRewards,
+    current: () => subscription,
+  };
 }
 
 describe("HandleAsaasWebhookUseCase", () => {

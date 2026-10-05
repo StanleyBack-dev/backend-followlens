@@ -6,6 +6,8 @@ export interface ClockPort {
   localDate(date?: Date): string;
   /** First instant of the next calendar day in the app timezone. */
   startOfNextLocalDay(date?: Date): Date;
+  /** The instant a calendar date (YYYY-MM-DD) starts in the app timezone. */
+  startOfLocalDate(localDate: string): Date;
 }
 
 export const CLOCK = Symbol("CLOCK");

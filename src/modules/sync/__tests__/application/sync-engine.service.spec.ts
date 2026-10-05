@@ -37,6 +37,9 @@ class FakeClock implements ClockPort {
   startOfNextLocalDay() {
     return new Date("2026-10-03T03:00:00Z");
   }
+  startOfLocalDate() {
+    return new Date("2026-10-02T03:00:00Z");
+  }
 }
 
 class InMemoryRuns implements Partial<SyncRunRepositoryPort> {

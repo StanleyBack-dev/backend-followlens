@@ -1,10 +1,21 @@
-import { IsString, MaxLength, MinLength } from "class-validator";
+import {
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+  MinLength,
+} from "class-validator";
 
 export class GoogleLoginDto {
   @IsString()
   @MinLength(10)
   @MaxLength(4096)
   idToken!: string;
+
+  /** Code of whoever invited this person; only used when the account is new. */
+  @IsOptional()
+  @Matches(/^[A-Z0-9]{6,12}$/)
+  referralCode?: string;
 }
 
 export type SessionUserResponse = {

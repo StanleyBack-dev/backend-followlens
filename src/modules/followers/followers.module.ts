@@ -35,6 +35,7 @@ import { FollowersController } from "@/modules/followers/presentation/rest/follo
     ApplyFollowerSnapshotUseCase,
     GetFollowersOverviewUseCase,
     UnfollowAlertsUseCase,
+    FOLLOWER_REPOSITORY,
   ],
 })
 export class FollowersModule {}
