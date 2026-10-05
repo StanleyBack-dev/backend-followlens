@@ -5,6 +5,10 @@ import {
   type PurgeOutcome,
 } from "@/modules/account/application/use-cases/purge-deleted-accounts.use-case";
 import {
+  type MonthlySummariesOutcome,
+  SendMonthlySummariesUseCase,
+} from "@/modules/engagement/application/use-cases/send-monthly-summaries.use-case";
+import {
   RunSubscriptionLifecycleUseCase,
   type SubscriptionLifecycleOutcome,
 } from "@/modules/billing/application/use-cases/run-subscription-lifecycle.use-case";
@@ -12,6 +16,7 @@ import {
 export type DailyMaintenanceOutcome = {
   subscriptions: SubscriptionLifecycleOutcome;
   accounts: PurgeOutcome;
+  summaries: MonthlySummariesOutcome;
 };
 
 // One scheduler endpoint for every daily housekeeping job, so the deploy needs
@@ -22,6 +27,7 @@ export class InternalMaintenanceController {
   constructor(
     private readonly subscriptionLifecycle: RunSubscriptionLifecycleUseCase,
     private readonly purgeAccounts: PurgeDeletedAccountsUseCase,
+    private readonly monthlySummaries: SendMonthlySummariesUseCase,
   ) {}
 
   @Get("daily")
@@ -29,6 +35,7 @@ export class InternalMaintenanceController {
     // Subscriptions first: a purge then never removes a user mid-downgrade.
     const subscriptions = await this.subscriptionLifecycle.execute();
     const accounts = await this.purgeAccounts.execute();
-    return { subscriptions, accounts };
+    const summaries = await this.monthlySummaries.execute();
+    return { subscriptions, accounts, summaries };
   }
 }

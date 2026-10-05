@@ -18,6 +18,6 @@ import { planLimitsProvider } from "@/shared/application/plan-limits.config";
     ManageProfilesUseCase,
   ],
   // The other contexts only need to know which profile a request acts on.
-  exports: [ProfileAccessService],
+  exports: [ProfileAccessService, PROFILE_REPOSITORY],
 })
 export class ProfilesModule {}

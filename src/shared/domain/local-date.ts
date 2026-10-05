@@ -35,6 +35,14 @@ function timeZoneOffsetMs(date: Date, timeZone: string): number {
   return asUtc - Math.floor(date.getTime() / 1000) * 1000;
 }
 
+/** The instant a calendar date (YYYY-MM-DD) starts in the timezone. */
+export function startOfLocalDate(localDate: string, timeZone: string): Date {
+  const [year, month, day] = localDate.split("-").map(Number);
+  const naiveMidnightUtc = Date.UTC(year, month - 1, day);
+  const offset = timeZoneOffsetMs(new Date(naiveMidnightUtc), timeZone);
+  return new Date(naiveMidnightUtc - offset);
+}
+
 export function startOfNextLocalDay(date: Date, timeZone: string): Date {
   const [year, month, day] = toLocalDate(date, timeZone).split("-").map(Number);
   const naiveMidnightUtc = Date.UTC(year, month - 1, day + 1);

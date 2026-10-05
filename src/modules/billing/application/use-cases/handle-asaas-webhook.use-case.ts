@@ -132,7 +132,7 @@ export class HandleAsaasWebhookUseCase {
       await this.plan.markPastDue(subscription);
     } else if (event === "PAYMENT_REFUNDED") {
       // The money went back, so the access goes with it.
-      await this.plan.end(subscription, SubscriptionStatus.CANCELED);
+      await this.plan.refund(subscription);
     }
     // PAYMENT_DELETED only updates the record above: the gateway also deletes
     // the pending next charge when a subscription is canceled, and that must

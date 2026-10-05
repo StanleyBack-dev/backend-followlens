@@ -79,6 +79,32 @@ export class AsaasPaymentGatewayProvider implements PaymentGatewayPort {
     });
   }
 
+  async shiftNextCharge(
+    gatewaySubscriptionId: string,
+    days: number,
+  ): Promise<void> {
+    const subscription = await this.request<{ nextDueDate: string }>(
+      `/subscriptions/${gatewaySubscriptionId}`,
+      { method: "GET" },
+    );
+    // A charge already generated keeps its own due date unless moved too.
+    const open = await this.request<{
+      data: { id: string; dueDate: string }[];
+    }>(`/payments?subscription=${gatewaySubscriptionId}&status=PENDING`, {
+      method: "GET",
+    });
+    for (const payment of open.data) {
+      await this.request(`/payments/${payment.id}`, {
+        method: "PUT",
+        body: { dueDate: shiftDate(payment.dueDate, days) },
+      });
+    }
+    await this.request(`/subscriptions/${gatewaySubscriptionId}`, {
+      method: "PUT",
+      body: { nextDueDate: shiftDate(subscription.nextDueDate, days) },
+    });
+  }
+
   // The authorization is created together with an immediate charge
   // (immediateQrCode) that both collects the first payment and registers the
   // payer's recurring consent; paymentCreationMode SUBSCRIPTION makes the
@@ -126,7 +152,7 @@ export class AsaasPaymentGatewayProvider implements PaymentGatewayPort {
 
   private async request<T>(
     path: string,
-    options: { method: "GET" | "POST" | "DELETE"; body?: unknown },
+    options: { method: "GET" | "POST" | "PUT" | "DELETE"; body?: unknown },
   ): Promise<T> {
     const apiKey = this.config.get<string>("ASAAS_API_KEY");
     if (!apiKey) {
@@ -175,4 +201,12 @@ export class AsaasPaymentGatewayProvider implements PaymentGatewayPort {
     }
     return payload as T;
   }
+}
+
+/** Adds days to a YYYY-MM-DD date. */
+function shiftDate(date: string, days: number): string {
+  const [year, month, day] = date.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day + days))
+    .toISOString()
+    .slice(0, 10);
 }

@@ -40,5 +40,6 @@ import { ImportsController } from "@/modules/imports/presentation/rest/imports.c
     GetImportStatusUseCase,
     ListImportsUseCase,
   ],
+  exports: [IMPORT_REPOSITORY],
 })
 export class ImportsModule {}

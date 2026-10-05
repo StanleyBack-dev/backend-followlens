@@ -75,7 +75,10 @@ export class ZipExportFileReader implements ExportFileReaderPort {
         throw new ZipLimitError("too many entries");
       }
       unzippedBudget -= file.originalSize;
-      if (file.originalSize > this.settings.maxUnzippedBytes || unzippedBudget < 0) {
+      if (
+        file.originalSize > this.settings.maxUnzippedBytes ||
+        unzippedBudget < 0
+      ) {
         throw new ZipLimitError("uncompressed size over limit");
       }
       return true;

@@ -26,7 +26,8 @@ export class SendWelcomeEmailUseCase {
   async execute(command: WelcomeEmailCommand): Promise<void> {
     const email = buildWelcomeEmail({
       name: command.name,
-      appUrl: this.config.get<string>("FRONTEND_URL") ?? "http://localhost:3000",
+      appUrl:
+        this.config.get<string>("FRONTEND_URL") ?? "http://localhost:3000",
     });
 
     await this.mailProvider.send({

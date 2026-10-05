@@ -62,6 +62,10 @@ export const envValidationSchema = Joi.object({
   // stays off until the account has it.
   BILLING_PIX_AUTOMATIC_ENABLED: bool().default(false),
 
+  // === REFERRALS ===
+  // Pro days the referrer earns when a referred user pays for the first time.
+  REFERRAL_REWARD_DAYS: Joi.number().integer().min(1).max(365).default(30),
+
   // === FREE PLAN LIMITS ===
   FREE_IMPORT_INTERVAL_DAYS: Joi.number().integer().min(0).max(90).default(7),
   FREE_HISTORY_DAYS: Joi.number().integer().min(1).max(365).default(30),

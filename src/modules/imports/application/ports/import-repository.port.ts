@@ -19,6 +19,14 @@ export type RecordImportInput = Omit<ImportView, "id"> & {
   localDate: string;
 };
 
+/** A completed import, as far as streaks and summaries care. */
+export type CompletedImport = {
+  createdAt: Date;
+  /** Calendar date in the app timezone. */
+  localDate: string;
+  followersCount: number | null;
+};
+
 export interface ImportRepositoryPort {
   record(input: RecordImportInput): Promise<ImportView>;
   countCompletedOn(profileId: string, localDate: string): Promise<number>;
@@ -29,6 +37,10 @@ export interface ImportRepositoryPort {
    */
   findLastComparisonAt(profileId: string): Promise<Date | null>;
   list(profileId: string, request: PageRequest): Promise<Paginated<ImportView>>;
+  /** Oldest first. */
+  listCompleted(profileId: string): Promise<CompletedImport[]>;
+  /** Profiles with at least one completed import in [from, to). */
+  listProfilesWithImportsBetween(from: Date, to: Date): Promise<string[]>;
 }
 
 export const IMPORT_REPOSITORY = Symbol("IMPORT_REPOSITORY");

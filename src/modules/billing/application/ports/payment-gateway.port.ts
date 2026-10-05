@@ -47,6 +47,11 @@ export interface PaymentGatewayPort {
     input: CreateGatewaySubscriptionInput,
   ): Promise<GatewaySubscription>;
   cancelSubscription(gatewaySubscriptionId: string): Promise<void>;
+  /**
+   * Moves the subscription's next charge (and any charge already open) by
+   * `days`; negative moves it back.
+   */
+  shiftNextCharge(gatewaySubscriptionId: string, days: number): Promise<void>;
   createPixAutomaticAuthorization(
     input: CreatePixAutomaticAuthorizationInput,
   ): Promise<PixAutomaticAuthorization>;

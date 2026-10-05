@@ -7,6 +7,7 @@ export type ProfileView = {
 };
 
 export interface ProfileRepositoryPort {
+  findById(profileId: string): Promise<ProfileView | null>;
   /** The user's profiles, default first, then oldest first. */
   listByUser(userId: string): Promise<ProfileView[]>;
   /** Creates the user's default profile unless it already exists. */

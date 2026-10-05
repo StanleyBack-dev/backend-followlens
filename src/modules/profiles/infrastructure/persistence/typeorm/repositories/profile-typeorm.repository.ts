@@ -14,6 +14,11 @@ export class ProfileTypeormRepository implements ProfileRepositoryPort {
     private readonly repository: Repository<ProfileOrmEntity>,
   ) {}
 
+  async findById(profileId: string): Promise<ProfileView | null> {
+    const row = await this.repository.findOneBy({ id: profileId });
+    return row ? toView(row) : null;
+  }
+
   async listByUser(userId: string): Promise<ProfileView[]> {
     const rows = await this.repository.find({
       where: { userId },

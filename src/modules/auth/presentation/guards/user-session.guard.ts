@@ -20,6 +20,8 @@ import {
   type UserRepositoryPort,
 } from "@/modules/users/application/ports/user-repository.port";
 import type { UserRole } from "@/modules/users/domain/enums/user-role.enum";
+import { isBonusActive } from "@/modules/users/domain/plan-access";
+import { CLOCK, type ClockPort } from "@/shared/application/ports/clock.port";
 
 export type RequestUser = {
   id: string;
@@ -29,6 +31,8 @@ export type RequestUser = {
   isAdmin: boolean;
   isMaster: boolean;
   termsAccepted: boolean;
+  proBonusActive: boolean;
+  proBonusUntil: Date | null;
 };
 
 export type AuthenticatedRequest = Request & { user?: RequestUser };
@@ -43,6 +47,7 @@ export class UserSessionGuard implements CanActivate {
     @Inject(TOKEN_SERVICE) private readonly tokens: TokenServicePort,
     @Inject(USER_REPOSITORY) private readonly users: UserRepositoryPort,
     private readonly adminPolicy: AdminPolicyService,
+    @Inject(CLOCK) private readonly clock: ClockPort,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -56,7 +61,8 @@ export class UserSessionGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
     const [scheme, token] = (request.header("authorization") ?? "").split(" ");
-    const payload = scheme === "Bearer" && token ? this.tokens.verify(token) : null;
+    const payload =
+      scheme === "Bearer" && token ? this.tokens.verify(token) : null;
     const user = payload ? await this.users.findById(payload.sub) : null;
 
     if (!user) {
@@ -72,6 +78,8 @@ export class UserSessionGuard implements CanActivate {
       isAdmin,
       isMaster: this.adminPolicy.isMaster(user.email),
       termsAccepted: user.termsVersion !== null,
+      proBonusActive: isBonusActive(user.proBonusUntil, this.clock.now()),
+      proBonusUntil: user.proBonusUntil,
     };
     return true;
   }

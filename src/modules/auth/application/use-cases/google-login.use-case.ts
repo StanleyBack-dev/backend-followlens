@@ -6,6 +6,7 @@ import {
 } from "@/modules/auth/application/ports/token-service.port";
 import { GoogleTokenVerifier } from "@/modules/auth/application/use-cases/google-token-verifier";
 import { SendWelcomeEmailUseCase } from "@/modules/mails/application/use-cases/send-welcome-email.use-case";
+import { ReferralsService } from "@/modules/referrals/application/referrals.service";
 import { AdminPolicyService } from "@/modules/users/application/admin-policy.service";
 import {
   USER_REPOSITORY,
@@ -30,9 +31,13 @@ export class GoogleLoginUseCase {
     @Inject(CLOCK) private readonly clock: ClockPort,
     private readonly adminPolicy: AdminPolicyService,
     private readonly welcomeEmail: SendWelcomeEmailUseCase,
+    private readonly referrals: ReferralsService,
   ) {}
 
-  async execute(idToken: string): Promise<GoogleLoginResult> {
+  async execute(
+    idToken: string,
+    referralCode?: string,
+  ): Promise<GoogleLoginResult> {
     const profile = await this.verifier.verify(idToken);
     const { user, created } = await this.users.upsertFromGoogle(
       {
@@ -44,7 +49,10 @@ export class GoogleLoginUseCase {
       },
       this.clock.now(),
     );
-    if (created) await this.sendWelcome(user);
+    if (created) {
+      await this.referrals.attribute(user.id, referralCode);
+      await this.sendWelcome(user);
+    }
 
     const token = this.tokens.issue({ sub: user.id, email: user.email });
     return { token, user };

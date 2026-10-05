@@ -27,6 +27,7 @@ function build(overrides: {
     sleep: async () => undefined,
     localDate: () => "2026-10-02",
     startOfNextLocalDay: () => new Date("2026-10-03T03:00:00Z"),
+    startOfLocalDate: () => new Date("2026-10-02T03:00:00Z"),
   } as ClockPort;
 
   const lock = {

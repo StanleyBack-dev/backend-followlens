@@ -56,6 +56,7 @@ function setup(options: { created: boolean; mailFails?: boolean }) {
     clock,
     { forcedRoleFor: () => undefined } as never,
     welcome,
+    { attribute: jest.fn(async () => undefined) } as never,
   );
   return { useCase, verifier, tokens, welcome };
 }

@@ -209,6 +209,20 @@ export class FollowerTypeormRepository implements FollowerRepositoryPort {
     return paginate(rows.map(toEventView), total, filters);
   }
 
+  countEventsBetween(
+    profileId: string,
+    type: FollowerEventType,
+    from: Date,
+    to: Date,
+  ): Promise<number> {
+    return this.events
+      .createQueryBuilder("e")
+      .where("e.idtb_profiles = :profileId", { profileId })
+      .andWhere("e.type = :type", { type })
+      .andWhere("e.occurred_at >= :from AND e.occurred_at < :to", { from, to })
+      .getCount();
+  }
+
   countEvents(profileId: string, type?: FollowerEventType): Promise<number> {
     return this.events.countBy(type ? { profileId, type } : { profileId });
   }
